@@ -6,6 +6,7 @@ import { generations, evolve, write } from "./base.js";
 
 const generation = 0;
 
+// Logic goes in "code"
 const code = `
 import { Noise } from "noisejs";
 import * as Tone from "tone";
