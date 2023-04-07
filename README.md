@@ -6,13 +6,13 @@
 
 - [Overview](#overview)
 - [Getting Started Guide](#getting-started-guide)
-  * [1. Prerequisites](#1-prerequisites)
-  * [2. Clone the repository](#2-clone-the-repository)
-  * [3. Install dependencies](#3-install-dependencies)
-  * [4. Add your API key](#4-add-your-api-key)
+  - [1. Prerequisites](#1-prerequisites)
+  - [2. Clone the repository](#2-clone-the-repository)
+  - [3. Install dependencies](#3-install-dependencies)
+  - [4. Add your API key](#4-add-your-api-key)
 - [Usage](#usage)
-  * [Environment](#environment)
-  * [Create generations](#create-generations)
+  - [Environment](#environment)
+  - [Create generations](#create-generations)
 - [Options](#options)
 - [Example goals (prompts)](#example-goals-prompts)
 
@@ -124,7 +124,7 @@ To give you some ideas, we have created a few example prompts that worked:
 - `red rectangle, yellow triangle`
 - `bouncing ball`
 - `fireworks, particle system`
-- `spaceship, game`
+- `spaceship flying through universe, game`
 - `flow field, animated`
 
 If the generated output is not working out, you can always update the prompt and add more info to
@@ -133,3 +133,5 @@ make it more specific:
 - `pure canvas`
 - `dark background`
 - `slow motion`
+- `no sound effects`
+- `no image assets`
