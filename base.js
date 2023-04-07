@@ -43,7 +43,8 @@ Examples
 			persona: {
 				type: "string",
 				alias: "p",
-				default: "expert node.js developer, creative, code optimizer, interaction expert",
+				default:
+					"expert node.js developer, creative developer, code optimizer, interaction expert",
 			},
 			temperature: {
 				type: "number",
@@ -95,17 +96,10 @@ RULES:
 const history = [];
 
 export const generations = flags.generations;
-const maxSpawns = 3;
-let spawns = maxSpawns;
 let run = 0;
 
 export async function evolve(generation) {
 	if (flags.help) {
-		return;
-	}
-
-	if (spawns <= 0) {
-		spinner.fail("Maximum retries reached");
 		return;
 	}
 	const nextGeneration = generation + 1;
@@ -113,14 +107,15 @@ export async function evolve(generation) {
 	try {
 		const filename = buildFilename(generation);
 		const code = await fs.readFile(filename, "utf-8");
+		spinner.start(`Evolution ${generation} -> ${generation + 1}`);
 		history.shift();
 		history.shift();
 
 		if (flags.clean) {
 			// Remove all older generations
-			const files = (await globby(["generation-*.js", "!generation-000.js"])).filter(
-				file => file > buildFilename(generation)
-			);
+			const files = (
+				await globby(["generation-*.js", "!generation-000.js", "generation-error-*.js"])
+			).filter(file => file > buildFilename(generation));
 			await Promise.all(files.map(async file => await fs.unlink(file)));
 		}
 
@@ -141,13 +136,13 @@ export async function evolve(generation) {
 			role: "user",
 			content: "continue the code",
 		});
-		spinner.start(`Evolution ${generation} -> ${generation + 1}`);
+
 		const completion = await openai.createChatCompletion({
 			model: flags.model,
 			messages: [
 				{
 					role: "system",
-					content: `You are a: ${flags.persona}. You strictly follow these instructions: ${instructions}`,
+					content: `You are a programmer with these characteristics: ${flags.persona}. You strictly follow these instructions: ${instructions}`,
 				},
 				...history,
 			],
@@ -160,22 +155,31 @@ export async function evolve(generation) {
 			.replace("```javascript", "")
 			.replace("```js", "")
 			.replace("```", "");
-
 		if (cleanContent.startsWith("/*")) {
 			history.push({
 				role: "assistant",
 				content: cleanContent,
 			});
 			const nextFilename = buildFilename(nextGeneration);
-			await fs.writeFile(nextFilename, prettify(cleanContent));
+
+			try {
+				await fs.writeFile(nextFilename, prettify(cleanContent));
+			} catch (error) {
+				spinner.fail(`Evolution ${generation} -> ${generation + 1}`);
+
+				const nextFilename = buildErrorFilename(nextGeneration);
+				await fs.writeFile(nextFilename, cleanContent);
+
+				return;
+			}
+
 			spinner.succeed(`Evolution ${generation} -> ${generation + 1}`);
 			await import(`./${nextFilename}`);
 		} else {
 			throw new Error("NOT_JAVASCRIPT");
 		}
 	} catch (error) {
-		spinner.fail(`Evolution ${generation} -> ${generation + 1} failed`);
-
+		spinner.fail(`Evolution ${generation} -> ${generation + 1}`);
 		await handleError(error, generation);
 	}
 }
@@ -186,6 +190,10 @@ export function pad(n) {
 
 export function buildFilename(currentGeneration) {
 	return path.join(".", `generation-${pad(currentGeneration)}.js`);
+}
+
+export function buildErrorFilename(currentGeneration) {
+	return path.join(".", `generation-error-${pad(currentGeneration)}.js`);
 }
 
 export function minify(code) {
