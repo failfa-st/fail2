@@ -5,6 +5,7 @@
 > This project is built to fail  
 > (until it doesn't)
 
+
 <!-- toc -->
 
 - [Overview](#overview)
@@ -28,11 +29,15 @@ bugs.
 This project, "fail2", is the second version and has been derived from its predecessor,
 ["fail1"](https://github.com/failfa-st/fail1), incorporating improvements and additional features.
 
+The generated code will be executed in the browser on a Canvas element and aims to create 2D applications
+using JavaScript.
+
 ## Getting Started Guide
 
 This guide will walk you through the process of using our generative process powered by OpenAI's
-GPT-3.5 language model to create innovative JavaScript projects. You'll learn how to install
-dependencies, add your API key, run the first generation, and explore the results.
+GPT-3.5 language model to create innovative JavaScript Canvas2D projects. You'll learn how to
+install dependencies, add your API key, run the first generation, and explore the results.
+
 
 ### 1. Prerequisites
 
@@ -80,6 +85,16 @@ OPENAI_API_KEY=your_api_key_here
 ```
 
 ## Usage
+
+The generated code will run in a local development server, so let's start this first
+
+```shell
+npm run dev
+```
+
+This will open http://localhost:8080 in your browser. If it doesn't, then please open it yourself
+and keep it open.
+
 
 To start the code generation process, run the following command:
 

@@ -21,6 +21,7 @@ function draw() {
 const FPS = 60;
 setTimeout(() => requestAnimationFrame(draw), 1000 / FPS);
 }
+
 draw();
 `;
 

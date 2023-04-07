@@ -10,7 +10,7 @@
   "scripts": {
     "prepare": "husky install",
     "start": "node generation-000.js",
-    "start:project": "webpack serve --config ./config/webpack.config.dev.js",
+    "dev": "webpack serve --config ./config/webpack.config.dev.js",
     "toc": "npx markdown-toc README.md -i"
   },
   "devDependencies": {
