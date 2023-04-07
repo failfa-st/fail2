@@ -2,13 +2,12 @@
  * CHANGELOG:
  * Generation 0: implement base script
  */
-import fs from "node:fs/promises";
-import { generations, evolve, prettify } from "./base.js";
+import { generations, evolve, write } from "./base.js";
 
 const generation = 0;
 
-async function run() {
-	return `
+// Logic goes in "code"
+const code = `
 import { Noise } from "noisejs";
 import * as Tone from "tone";
 
@@ -18,14 +17,15 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 function draw() {
-// Draw to canvas
+// Draw on canvas
+const FPS = 60;
+setTimeout(() => requestAnimationFrame(draw), 1000 / FPS);
 }
 
 draw();
 `;
-}
 
-await fs.writeFile("./project/src/index.js", prettify(await run()));
+await write(code);
 
 if (generation < generations) {
 	await evolve(generation);

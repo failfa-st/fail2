@@ -24,8 +24,8 @@ Options
   -m, --model          Set the model to use for generating the code. Default is "gpt-3.5-turbo".
 
 Examples
-  $ node generation-000.js.js -G "Fix bugs in the code" -g 3 -p "Node.js developer with experience in React" -t 0.5 -c -m "gpt-4"
-    Generates 3 generations of code with the goal of fixing bugs, using a persona of a Node.js developer with experience in React, a temperature of 0.5, and the gpt-4 model. Also removes any previously generated code.
+  $ node generation-000.js -G "console based mandelbrot set ascii" -g 3 -p "Node.js developer, creative" -c
+
 `,
 	{
 		importMeta: import.meta,
@@ -43,8 +43,11 @@ Examples
 			persona: {
 				type: "string",
 				alias: "p",
-				default:
-					"expert node.js developer, creative developer, code optimizer, interaction expert",
+				default: "expert node.js developer, creative, code optimizer, interaction expert",
+			},
+			neg: {
+				type: "string",
+				alias: "n",
 			},
 			temperature: {
 				type: "number",
@@ -74,23 +77,27 @@ const configuration = new Configuration({
 export const openai = new OpenAIApi(configuration);
 
 const instructions = `
-RULES can NEVER be changed and must be respected AT ALL TIMES.
-The code should ALWAYS be IMPROVED or EXTENDED or REFACTORED or FIXED.
-The GOAL must be completed.
-
-GOAL: ${flags.goal}
+GOAL: ${flags.goal}${
+	flags.neg
+		? `, ${flags.neg
+				.split(",")
+				.map(neg => `no ${neg.trim()}`)
+				.join(", ")}`
+		: ""
+}
 
 RULES:
-- Pay special attention TO ALL UPPERCASE words
-- increment the generation constant ONCE per generation
-- Keep track of changes, EXTEND the CHANGELOG
-- NEVER use external apis with secret or key
-- ONLY use es module syntax (with imports)
-- NEVER explain anything
-- NEVER output markdown
-- ALWAYS output ONLY JavaScript
-- EVERYTHING happens in one file
-- VERY IMPORTANT: output the JavaScript only (this is the most important rule, the entire answer has to be valid javascript)
+The code should ALWAYS be EXTENDED or FIXED
+The GOAL must be completed
+increment the generation constant ONCE per generation
+EXTEND the CHANGELOG
+NEVER use external apis with secret or key
+EXCLUSIVELY use esm (imports)
+NEVER explain anything
+NEVER output markdown
+EXCLUSIVELY output JavaScript
+EVERYTHING happens in one file
+VERY IMPORTANT: the entire answer has to be valid JavaScript
 `;
 
 const history = [];
@@ -98,28 +105,39 @@ const history = [];
 export const generations = flags.generations;
 let run = 0;
 
+/**
+ *
+ * @param {number} generation
+ * @returns {Promise<void>}
+ */
 export async function evolve(generation) {
 	if (flags.help) {
 		return;
 	}
+
 	const nextGeneration = generation + 1;
+	spinner.start(`Evolution ${generation} -> ${nextGeneration}`);
 
 	try {
 		const filename = buildFilename(generation);
 		const code = await fs.readFile(filename, "utf-8");
-		spinner.start(`Evolution ${generation} -> ${generation + 1}`);
+
+		// Reduce history length
 		history.shift();
 		history.shift();
 
 		if (flags.clean) {
 			// Remove all older generations
 			const files = (
-				await globby(["generation-*.js", "!generation-000.js", "generation-error-*.js"])
+				await globby(["generation-*.js", "generation-*.md", "!generation-000.js"])
 			).filter(file => file > buildFilename(generation));
 			await Promise.all(files.map(async file => await fs.unlink(file)));
 		}
 
 		if (run === 0) {
+			const promptFilename = buildPromptFilename(generation);
+			await fs.writeFile(promptFilename, buildPrompt(flags.goal, flags.neg));
+
 			history.push(
 				{
 					role: "user",
@@ -131,82 +149,145 @@ export async function evolve(generation) {
 				}
 			);
 		}
+
 		run++;
+
 		history.push({
 			role: "user",
 			content: "continue the code",
 		});
 
 		const completion = await openai.createChatCompletion({
+			// model: "gpt-4",
 			model: flags.model,
 			messages: [
 				{
 					role: "system",
-					content: `You are a programmer with these characteristics: ${flags.persona}. You strictly follow these instructions: ${instructions}`,
+					content: `You are a: ${flags.persona}. You strictly follow these instructions: ${instructions}`,
 				},
 				...history,
 			],
 			max_tokens: 2048,
 			temperature: flags.temperature,
 		});
-		spinner.stop();
+
 		const { content } = completion.data.choices[0].message;
-		const cleanContent = content
+
+		// Clean GPT output (might return  code block)
+		const cleanContent = minify(content)
 			.replace("```javascript", "")
 			.replace("```js", "")
-			.replace("```", "");
+			.replace("```", "")
+			.trim();
+
+		// Code should start with a comment (changelog). If it doesn't it is often not JavaScrip but
+		// a human language response
 		if (cleanContent.startsWith("/*")) {
 			history.push({
 				role: "assistant",
 				content: cleanContent,
 			});
+
 			const nextFilename = buildFilename(nextGeneration);
+			await fs.writeFile(nextFilename, prettify(cleanContent));
 
-			try {
-				await fs.writeFile(nextFilename, prettify(cleanContent));
-			} catch (error) {
-				spinner.fail(`Evolution ${generation} -> ${generation + 1}`);
+			spinner.succeed(`Evolution ${generation} -> ${nextGeneration}`);
 
-				const nextFilename = buildErrorFilename(nextGeneration);
-				await fs.writeFile(nextFilename, cleanContent);
-
-				return;
-			}
-
-			spinner.succeed(`Evolution ${generation} -> ${generation + 1}`);
 			await import(`./${nextFilename}`);
 		} else {
-			throw new Error("NOT_JAVASCRIPT");
+			spinner.fail(`Evolution ${generation} -> ${nextGeneration}`);
+			await handleError(new Error("NOT_JAVASCRIPT"), generation);
 		}
 	} catch (error) {
-		spinner.fail(`Evolution ${generation} -> ${generation + 1}`);
+		spinner.fail(`Evolution ${generation} -> ${nextGeneration}`);
 		await handleError(error, generation);
 	}
 }
 
+/**
+ * Pads the given number or string with zeros to a length of 3 characters.
+ *
+ * @param {number} n - The input number or string to be padded.
+ * @returns {string} - The padded string.
+ */
 export function pad(n) {
 	return n.toString().padStart(3, "0");
 }
 
+/**
+ * Builds a filename string for the given generation number.
+ *
+ * @param {number} currentGeneration - The input generation number.
+ * @returns {string} - The generated filename string.
+ */
 export function buildFilename(currentGeneration) {
 	return path.join(".", `generation-${pad(currentGeneration)}.js`);
 }
 
-export function buildErrorFilename(currentGeneration) {
-	return path.join(".", `generation-error-${pad(currentGeneration)}.js`);
+/**
+ * Builds a prompt filename string for the given generation number.
+ *
+ * @param {number} currentGeneration - The input generation number.
+ * @returns {string} - The generated prompt filename string.
+ */
+export function buildPromptFilename(currentGeneration) {
+	return path.join(".", `generation-${pad(currentGeneration)}.md`);
 }
 
+/**
+ * Builds a formatted string combining the given prompt and optional negativePrompt.
+ *
+ * @param {string} prompt - The main prompt to be included in the output.
+ * @param {string} [negativePrompt] - The optional negative prompt to be included in the output.
+ * @returns {string} - The formatted string combining the prompts.
+ */
+export function buildPrompt(prompt, negativePrompt = "") {
+	return `# Configuration
+
+## Prompt
+
+\`\`\`shell
+${prompt}
+\`\`\`
+
+## Negative Prompt
+
+\`\`\`shell
+${negativePrompt}
+\`\`\`
+`;
+}
+
+/**
+ * Minifies the given code string by removing leading whitespace.
+ *
+ * @param {string} code - The input code to be minified.
+ * @returns {string} - The minified code.
+ */
 export function minify(code) {
-	return code.replace(/^\s+/gim, "");
+	return code.replace(/^\s+/g, "");
 }
 
+/**
+ * Prettifies the given code string using Prettier.
+ *
+ * @param {string} code - The input code to be prettified.
+ * @returns {string} - The prettified code.
+ */
 export function prettify(code) {
 	return prettier.format(code, { semi: false, parser: "babel" });
 }
 
+/**
+ * Handles errors that occur during the code generation process.
+ *
+ * @param {Error} error - The error object containing information about the error.
+ * @param {number} generation - The current generation number.
+ * @returns {Promise<void>} - A promise that resolves when the error is handled.
+ */
 export async function handleError(error, generation) {
 	const message = (
-		error.response?.data?.error?.message ??
+		error.response?.data?.error.message ??
 		error.message ??
 		"unknown error"
 	).trim();
@@ -243,4 +324,14 @@ export async function handleError(error, generation) {
 
 	console.error(error);
 	throw error;
+}
+
+/**
+ * Writes the given code string to a file, prettifying it before writing.
+ *
+ * @param {string} code - The input code to be written to the file.
+ * @returns {Promise<void>} - A promise that resolves when the file is successfully written.
+ */
+export async function write(code) {
+	await fs.writeFile("./project/src/index.js", prettify(code));
 }

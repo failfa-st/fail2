@@ -2,6 +2,7 @@ import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 
 export default {
+	devtool: "hidden-source-map",
 	entry: "./project/src/index.js",
 	output: {
 		path: path.resolve("./dist"),

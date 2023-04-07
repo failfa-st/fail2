@@ -112,3 +112,6 @@ training
 
 # IntelliJ
 .idea
+
+# project files
+project/src/index.js

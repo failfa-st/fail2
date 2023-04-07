@@ -1,6 +1,10 @@
-# fail2
+<h1 align="center"><big>fail2</big></h1>
 
-**100% Prompt Driven Development: JavaScript Canvas2D**
+<p align="center"><img src="assets/logo.png" alt="logo" width="200"/></p>
+
+> This project is built to fail  
+> (until it doesn't)
+
 
 <!-- toc -->
 
@@ -11,20 +15,21 @@
   - [3. Install dependencies](#3-install-dependencies)
   - [4. Add your API key](#4-add-your-api-key)
 - [Usage](#usage)
-  - [Environment](#environment)
-  - [Create generations](#create-generations)
 - [Options](#options)
-- [Example goals (prompts)](#example-goals-prompts)
+- [Functionality](#functionality)
 
 <!-- tocstop -->
 
 ## Overview
 
-This project aims to generate code using the OpenAI API evolutionarily. It means that each
+This project aims to generate code using the OpenAI API in an evolutionary way. It means that each
 generation will build upon the previous one to make the code better, extend it, refactor it or fix
 bugs.
 
-The code will be executed in the browser on a Canvas element and aims to create 2D applications
+This project, "fail2", is the second version and has been derived from its predecessor,
+["fail1"](https://github.com/failfa-st/fail1), incorporating improvements and additional features.
+
+The generated code will be executed in the browser on a Canvas element and aims to create 2D applications
 using JavaScript.
 
 ## Getting Started Guide
@@ -32,6 +37,7 @@ using JavaScript.
 This guide will walk you through the process of using our generative process powered by OpenAI's
 GPT-3.5 language model to create innovative JavaScript Canvas2D projects. You'll learn how to
 install dependencies, add your API key, run the first generation, and explore the results.
+
 
 ### 1. Prerequisites
 
@@ -80,8 +86,6 @@ OPENAI_API_KEY=your_api_key_here
 
 ## Usage
 
-### Environment
-
 The generated code will run in a local development server, so let's start this first
 
 ```shell
@@ -91,47 +95,43 @@ npm run dev
 This will open http://localhost:8080 in your browser. If it doesn't, then please open it yourself
 and keep it open.
 
-### Create generations
 
 To start the code generation process, run the following command:
 
 ```shell
-node generation-000.js -G "<goal (prompt)>" -g <generations>
+node generation-000.js -G "<goal>" -g <generations> -p "<persona>" -t <temperature> -c -m "<model>" -n "<negative_prompt>"
 ```
-
-This is the most basic example, where you will use a few default options that worked best when we
-tried fail2.
 
 ## Options
 
 | Option          | Alias | Type      | Default                                                                    | Description                                                       |
 | --------------- | ----- | --------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `--goal`        | `-G`  | `string`  | `"extend the code"`                                                        | Sets the goal (also known as prompt) of the generated code        |
+| `--goal`        | `-G`  | `string`  | `"extend the code"`                                                        | Sets the goal of the generated code                               |
 | `--generations` | `-g`  | `number`  | `1`                                                                        | Sets the number of generations for the generated code             |
 | `--persona`     | `-p`  | `string`  | `"expert node.js developer, creative, code optimizer, interaction expert"` | Sets the persona of the generated code                            |
 | `--temperature` | `-t`  | `number`  | `0.2`                                                                      | Sets the temperature for the generated code                       |
 | `--clean`       | `-c`  | `boolean` | `false`                                                                    | Set to `true` if you want to remove any previously generated code |
 | `--model`       | `-m`  | `string`  | `"gpt-3.5-turbo"`                                                          | Sets the model to use for generating the code                     |
+| `--negative`    | `-n`  | `string`  |                                                                            | Sets the negative prompt for the generated code                   |
 
-## Example goals (prompts)
+## Functionality
 
-Try to image on what things you would love to draw on a canvas and convert this into a simple
-prompt. As we are limited to the amount of tokens, we have to be creative here as well if something
-is not working out.
+This project generates code using the OpenAI API and follows a set of instructions and constraints
+to produce code that can be extended, refactored, or fixed. Each generation of code builds upon the
+previous one and aims to improve the code. The project uses different personas to generate code and
+can create a specified number of generations of code. The generated code is formatted using Prettier
+and saved in separate files. The project also keeps track of changes and provides a changelog.
+Additionally, it can remove previously generated code. The project can handle errors.
 
-To give you some ideas, we have created a few example prompts that worked:
+The generated code is written to a file, `./project/src/index.js`, which is compiled by Webpack. A
+Webpack Dev Server runs, allowing you to view the live changes as the code generation process
+evolves.
 
-- `red rectangle, yellow triangle`
-- `bouncing ball`
-- `fireworks, particle system`
-- `spaceship flying through universe, game`
-- `flow field, animated`
+The project has two main files:
 
-If the generated output is not working out, you can always update the prompt and add more info to
-make it more specific:
-
-- `pure canvas`
-- `dark background`
-- `slow motion`
-- `no sound effects`
-- `no image assets`
+- `base.js`: This file manages the code generation process using the OpenAI API, writes the
+  generated code to files (including `./project/src/index.js`), and handles errors that might occur
+  during code generation.
+- `generation-000.js`: This file is the starting point for the code generation process. It contains
+  the initial code snippet and sets everything in motion for generating code by calling the
+  necessary functions from `base.js`.
