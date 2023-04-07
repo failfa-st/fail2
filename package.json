@@ -33,6 +33,7 @@
     "p5": "^1.4.0",
     "prettier": "^2.8.7",
     "style-loader": "^3.3.2",
+    "tone": "^14.7.77",
     "webpack": "^5.77.0",
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.13.2"

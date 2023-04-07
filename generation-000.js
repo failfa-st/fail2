@@ -9,18 +9,19 @@ const generation = 0;
 
 async function run() {
 	return `
-import { Noise } from "noisejs"
+import { Noise } from "noisejs";
+import * as Tone from "tone";
 
-const canvas = document.getElementById("canvas")
-const ctx = canvas.getContext("2d")
-canvas.width = window.innerWidth
-canvas.height = window.innerHeight
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 function draw() {
 // Draw to canvas
 }
 
-draw()
+draw();
 `;
 }
 
