@@ -87,7 +87,7 @@ GOAL: ${flags.goal}${
 }
 
 RULES:
-The code should ALWAYS be EXTENDED or REFACTORED or FIXED
+The code should ALWAYS be EXTENDED or FIXED
 The GOAL must be completed
 increment the generation constant ONCE per generation
 EXTEND the CHANGELOG
