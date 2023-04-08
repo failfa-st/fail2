@@ -26,9 +26,9 @@ Options
   -s, --seed           Set the seed. Default is -1.
 
 Examples
-  $ node base-art.js -p "flow field" -g 3
-  $ node base-default.js -p "matrix code" -g 10 -c -s 123456789
-  $ node base-default.js -p "arcade game asteroids" -g 5 -n "audio, images, alert" -P "JavaScript expert, game developer, retro lover"
+  $ node base-default.js -p "matrix code" -g 3
+  $ node base-art.js -p "flow field" -g 10 -c -s 123456789
+  $ node base-game.js -p "arcade game asteroids" -g 5 -n "audio files, images, alert" -P "JavaScript expert, game developer, retro lover"
 
 `,
 	{

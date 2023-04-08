@@ -111,6 +111,7 @@ training
 /base-*
 !/base-default.js
 !/base-art.js
+!/base-game.js
 
 
 # IntelliJ
