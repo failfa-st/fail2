@@ -100,7 +100,6 @@ EVERYTHING happens in one file
 VERY IMPORTANT: the entire answer has to be valid JavaScript
 `;
 const base = path.parse(process.argv[1]).base;
-console.log(instructions, path.parse(process.argv[1]));
 
 const history = [];
 
