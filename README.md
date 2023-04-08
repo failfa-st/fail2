@@ -14,8 +14,14 @@
   * [3. Install dependencies](#3-install-dependencies)
   * [4. Add your API key](#4-add-your-api-key)
 - [Usage](#usage)
+  * [Dev server](#dev-server)
+  * [Start the generation process](#start-the-generation-process)
 - [Options](#options)
-  * [Custom Start File](#custom-start-file)
+  * [Temperature](#temperature)
+  * [Negative Prompt](#negative-prompt)
+  * [Model](#model)
+  * [Seed](#seed)
+- [Starter Files](#starter-files)
 - [Functionality](#functionality)
 
 <!-- tocstop -->
@@ -85,6 +91,8 @@ OPENAI_API_KEY=your_api_key_here
 
 ## Usage
 
+### Dev server
+
 The generated code will run in a local development server, so let's start this first
 
 ```shell
@@ -94,33 +102,72 @@ npm run dev
 This will open http://localhost:8080 in your browser. If it doesn't, then please open it yourself
 and keep it open.
 
+### Start the generation process
+
 To start the code generation process, run the following command:
 
 ```shell
-node generation-000.js -G "<goal>" -g <generations> -p "<persona>" -t <temperature> -c -m "<model>" -n "<negative_prompt>"
+node base-default.js -p "<prompt>" -g <generations> -P "<persona>" -t <temperature> -c -m "<model>" -n "<negative_prompt>" -s <seed>
 ```
 
 ## Options
 
-| Option          | Alias | Type      | Default                                                                    | Description                                                       |
-| --------------- | ----- | --------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `--goal`        | `-G`  | `string`  | `"extend the code"`                                                        | Sets the goal of the generated code                               |
-| `--generations` | `-g`  | `number`  | `1`                                                                        | Sets the number of generations for the generated code             |
-| `--persona`     | `-p`  | `string`  | `"expert node.js developer, creative, code optimizer, interaction expert"` | Sets the persona of the generated code                            |
-| `--temperature` | `-t`  | `number`  | `0.2`                                                                      | Sets the temperature for the generated code                       |
-| `--clean`       | `-c`  | `boolean` | `false`                                                                    | Set to `true` if you want to remove any previously generated code |
-| `--model`       | `-m`  | `string`  | `"gpt-3.5-turbo"`                                                          | Sets the model to use for generating the code                     |
-| `--negative`    | `-n`  | `string`  |                                                                            | Sets the negative prompt for the generated code                   |
+| Option             | Alias | Type      | Default                                   | Description                                                       |
+| ------------------ | ----- | --------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| `--prompt`         | `-p`  | `string`  | `"extend the code"`                       | Sets the prompt for the generated code                            |
+| `--negativePrompt` | `-n`  | `string`  | `""`                                      | Sets the negative prompt for the generated code                   |
+| `--generations`    | `-g`  | `number`  | `1`                                       | Sets the number of generations for the generated code             |
+| `--persona`        | `-P`  | `string`  | `"JavaScript expert, performance expert"` | Sets the persona of the generated code                            |
+| `--temperature`    | `-t`  | `number`  | `0.2`                                     | Sets the temperature for the generated code                       |
+| `--seed`           | `-s`  | `number`  | `-1`                                      | Sets the seed for the generated code (`-1` creates a random seed) |
+| `--model`          | `-m`  | `string`  | `"gpt-3.5-turbo"`                         | Sets the model to use for generating the code                     |
+| `--clean`          | `-c`  | `boolean` | `false`                                   | Set to `true` if you want to remove any previously generated code |
 
-### Custom Start File
+### Temperature
 
-This project provides two sample files, generation-000.js and custom-000.js, to initiate the code
-generation process. The former includes a changelog and preset imports to facilitate the initial
-phase, while the latter enables you to customize the code snippet by specifying your preferred
-imports. Moreover, you can create multiple custom files to cater to different requirements and
-select the appropriate one to commence the code generation process.
+The `--temperature` flag controls the level of creativity in the generated code, with a range of 0
+to 2. Higher values result in more innovative code, but also increase the risk of errors or invalid
+JavaScript. For best results, use a value below 0.5 to balance creativity with reliability. The
+default value is 0.2.
 
-> ⚠️ Custom files must always start with `custom-`
+### Negative Prompt
+
+The `--negativePrompt` flag negates each comma-separated part of the prompt with "no" to prevent
+unwanted behaviors in generated code. For example, `--negativePrompt "audio, images"` becomes
+`"no audio, no images"`. This feature helps create safer and better code but may not eliminate all
+undesired behavior.
+
+### Model
+
+The `--model` flag can be used to specify the model to use for generating code. The default model is
+`"gpt-3.5-turbo"`. However, you can also choose to use the `"gpt-4"` model, which provides more
+tokens but may result in undesired behavior.
+
+> 💡 Using the `"gpt-4"` model will significantly increase the time it takes to generate code as it
+> is slower than the default `"gpt-3.5-turbo"` model.
+
+To learn more about the available models and their respective features, please refer to
+the[ OpenAI documentation](https://platform.openai.com/docs/models).
+
+### Seed
+
+The `--seed` flag sets the seed for the random number generator used in code generation. By default,
+the seed is set to a random number between 0 and 100000000. If a custom seed is provided with the
+`--seed` flag, that value will be used instead.
+
+> 💡 The seed is a pseudo-random number and can generate unique results, but won't be the same each
+> time.
+
+## Starter Files
+
+This project comes with two starter files, [`base-default.js`](`base-default.js`) and
+[`base-art.js`](`base-art.js`), which provide a basic starting point and an example of how to add
+dependencies.
+
+> ⚠️ Custom files must always start with `base-`
+
+> 💡 To avoid extra token costs, create a custom base file such as `base-no-changelog.js` without
+> the changelog comment.
 
 ## Functionality
 
@@ -135,11 +182,11 @@ The generated code is written to a file, `./project/src/index.js`, which is comp
 Webpack Dev Server runs, allowing you to view the live changes as the code generation process
 evolves.
 
-The project has two main files:
+The project uses two main files:
 
 - `base.js`: This file manages the code generation process using the OpenAI API, writes the
   generated code to files (including `./project/src/index.js`), and handles errors that might occur
   during code generation.
-- `generation-000.js`: This file is the starting point for the code generation process. It contains
-  the initial code snippet and sets everything in motion for generating code by calling the
-  necessary functions from `base.js`.
+- `base-*.js`: This file is the starting point for the code generation process. It contains the
+  initial code snippet and sets everything in motion for generating code by calling the necessary
+  functions from `base.js`.

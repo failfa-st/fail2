@@ -108,9 +108,10 @@ training
 
 #
 /generation-*
-!/generation-000.js
-/custom-*
-!/custom-000.js
+/base-*
+!/base-default.js
+!/base-art.js
+
 
 # IntelliJ
 .idea

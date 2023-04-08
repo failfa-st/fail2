@@ -2,7 +2,7 @@ import path from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 
 export default {
-	devtool: "hidden-source-map",
+	devtool: false,
 	entry: "./project/src/index.js",
 	output: {
 		path: path.resolve("./dist"),
@@ -32,14 +32,12 @@ export default {
 		hot: false,
 		port: 8080,
 		open: true,
+		allowedHosts: ["all"],
 		static: {
 			directory: "./project/public",
 		},
 		client: {
-			overlay: {
-				errors: true,
-				warnings: false,
-			},
+			overlay: false,
 		},
 	},
 };
