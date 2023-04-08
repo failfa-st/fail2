@@ -7,32 +7,36 @@ import { Configuration, OpenAIApi } from "openai";
 import ora from "ora";
 import { globby } from "globby";
 import prettier from "prettier";
-
+const pkg = JSON.parse(await fs.readFile("package.json"));
 config();
 
 const { flags } = meow(
 	`
 Usage
-  $ node <start generation>
+  $ node <starter file>
 
 Options
-  -G, --goal           Set the goal of the generated code. Default is "extend the code".
+  -p, --prompt         Set the main prompt of the generated code. Default is "extend the code".
   -g, --generations    Set the number of generations for the generated code. Default is 1.
-  -p, --persona        Set the persona of the generated code. Default is "expert node.js developer, creative, code optimizer, interaction expert".
+  -P, --persona        Set the persona of the generated code. Default is "JavaScript expert, performance expert".
   -t, --temperature    Set the temperature for the generated code. Default is 0.2.
-  -c, --clean          Set to true if you want to remove any previously generated code.
+  -c, --clean          Set to true if you want to remove any previously generated code.  Default is false.
   -m, --model          Set the model to use for generating the code. Default is "gpt-3.5-turbo".
+  -n, --negativePrompt Set the negative prompt. Default is "".
+  -s, --seed           Set the seed. Default is -1.
 
 Examples
-  $ node generation-000.js -G "console based mandelbrot set ascii" -g 3 -p "Node.js developer, creative" -c
+  $ node base-default.js -p "matrix code" -g 3
+  $ node base-art.js -p "flow field" -g 10 -c -s 123456789
+  $ node base-game.js -p "arcade game asteroids" -g 5 -n "audio files, images, alert" -P "JavaScript expert, game developer, retro lover"
 
 `,
 	{
 		importMeta: import.meta,
 		flags: {
-			goal: {
+			prompt: {
 				type: "string",
-				alias: "G",
+				alias: "p",
 				default: "extend the code",
 			},
 			generations: {
@@ -42,17 +46,23 @@ Examples
 			},
 			persona: {
 				type: "string",
-				alias: "p",
-				default: "expert node.js developer, creative, code optimizer, interaction expert",
+				alias: "P",
+				default: "JavaScript expert, performance expert",
 			},
-			neg: {
+			negativePrompt: {
 				type: "string",
 				alias: "n",
+				default: "",
 			},
 			temperature: {
 				type: "number",
 				alias: "t",
 				default: 0.2,
+			},
+			seed: {
+				type: "number",
+				alias: "s",
+				default: -1,
 			},
 			clean: {
 				type: "boolean",
@@ -76,29 +86,35 @@ const configuration = new Configuration({
 
 export const openai = new OpenAIApi(configuration);
 
+// Seed is pseudo but can help for less predictive result without adjusting th temperature
+const seed = flags.seed < 0 ? Math.round(Math.random() * 100000000) : flags.seed;
+
 const instructions = `
-GOAL: ${flags.goal}${
-	flags.neg
-		? `, ${flags.neg
+GOAL: ${flags.prompt}${
+	flags.negativePrompt
+		? `, ${flags.negativePrompt
 				.split(",")
-				.map(neg => `no ${neg.trim()}`)
+				.map(negativePrompt => `no ${negativePrompt.trim()}`)
 				.join(", ")}`
 		: ""
 }
 
+SEED: ${seed}
+
 RULES:
-The code should ALWAYS be EXTENDED or FIXED
-The GOAL must be completed
-increment the generation constant ONCE per generation
-EXTEND the CHANGELOG
-NEVER use external apis with secret or key
-EXCLUSIVELY use esm (imports)
+COMPLETE the GOAL
+ALWAYS EXTENDED or FIX the code
+INCREMENT "const generation" ONCE per generation
+NEVER use external apis with key
 NEVER explain anything
 NEVER output markdown
+NEVER add imports
 EXCLUSIVELY output JavaScript
-EVERYTHING happens in one file
+EXCLUSIVELY use one file
 VERY IMPORTANT: the entire answer has to be valid JavaScript
 `;
+const starter = path.parse(process.argv[1]);
+const { base, name } = starter;
 
 const history = [];
 
@@ -106,9 +122,10 @@ export const generations = flags.generations;
 let run = 0;
 
 /**
+ * Generates a new population for the specified generation.
  *
- * @param {number} generation
- * @returns {Promise<void>}
+ * @param {number} generation - The number of the current generation.
+ * @returns {Promise<void>} - A Promise that resolves once the new generation has been generated.
  */
 export async function evolve(generation) {
 	if (flags.help) {
@@ -116,28 +133,30 @@ export async function evolve(generation) {
 	}
 
 	const nextGeneration = generation + 1;
-	spinner.start(`Evolution ${generation} -> ${nextGeneration}`);
+	spinner.start(`Generation ${pad(nextGeneration)}`);
 
 	try {
-		const filename = buildFilename(generation);
+		const filename = generation === 0 ? base : buildFilename(generation);
 		const code = await fs.readFile(filename, "utf-8");
 
 		// Reduce history length
 		history.shift();
 		history.shift();
 
-		if (flags.clean) {
-			// Remove all older generations
-			const files = (
-				await globby(["generation-*.js", "generation-*.md", "!generation-000.js"])
-			).filter(file => file > buildFilename(generation));
-			await Promise.all(files.map(async file => await fs.unlink(file)));
-		}
-
 		if (run === 0) {
-			const promptFilename = buildPromptFilename(generation);
-			await fs.writeFile(promptFilename, buildPrompt(flags.goal, flags.neg));
+			if (flags.clean) {
+				// Remove all older generations and prompts
+				const files = (await globby(["generation-*", "base-*.md", "!base-*.js"])).filter(
+					file => file > filename
+				);
+				await Promise.all(files.map(async file => await fs.unlink(file)));
+			}
+			const promptFilename = buildPromptFilename(
+				generation === 0 ? name : `generation-${pad(nextGeneration)}`
+			);
+			await fs.writeFile(promptFilename, buildPrompt(base));
 
+			// Imply previous message history. Guides te AI and provides the base code
 			history.push(
 				{
 					role: "user",
@@ -150,20 +169,21 @@ export async function evolve(generation) {
 			);
 		}
 
+		// Increment the run cycle to allow safe usage of this flag
 		run++;
 
+		// Push the new request
 		history.push({
 			role: "user",
 			content: "continue the code",
 		});
 
 		const completion = await openai.createChatCompletion({
-			// model: "gpt-4",
 			model: flags.model,
 			messages: [
 				{
 					role: "system",
-					content: `You are a: ${flags.persona}. You strictly follow these instructions: ${instructions}`,
+					content: `You are a ${flags.persona}. You strictly follow these instructions: ${instructions}`,
 				},
 				...history,
 			],
@@ -180,9 +200,8 @@ export async function evolve(generation) {
 			.replace("```", "")
 			.trim();
 
-		// Code should start with a comment (changelog). If it doesn't it is often not JavaScrip but
-		// a human language response
-		if (cleanContent.startsWith("/*")) {
+		// Test for valid JavaScript
+		if (isValidJS(cleanContent)) {
 			history.push({
 				role: "assistant",
 				content: cleanContent,
@@ -191,16 +210,17 @@ export async function evolve(generation) {
 			const nextFilename = buildFilename(nextGeneration);
 			await fs.writeFile(nextFilename, prettify(cleanContent));
 
-			spinner.succeed(`Evolution ${generation} -> ${nextGeneration}`);
+			spinner.succeed(`Generation ${pad(nextGeneration)}`);
 
 			await import(`./${nextFilename}`);
 		} else {
-			spinner.fail(`Evolution ${generation} -> ${nextGeneration}`);
-			await handleError(new Error("NOT_JAVASCRIPT"), generation);
+			spinner.fail(`Generation ${pad(nextGeneration)}`);
+			await writeError(nextGeneration, cleanContent);
+			await handleError(new Error("NOT_JAVASCRIPT"));
 		}
 	} catch (error) {
-		spinner.fail(`Evolution ${generation} -> ${nextGeneration}`);
-		await handleError(error, generation);
+		spinner.fail(`Generation ${pad(nextGeneration)}`);
+		await handleError(error);
 	}
 }
 
@@ -211,7 +231,7 @@ export async function evolve(generation) {
  * @returns {string} - The padded string.
  */
 export function pad(n) {
-	return n.toString().padStart(3, "0");
+	return n.toString().padStart(4, "0");
 }
 
 /**
@@ -225,35 +245,87 @@ export function buildFilename(currentGeneration) {
 }
 
 /**
- * Builds a prompt filename string for the given generation number.
+ * Builds an error filename string for the given generation number.
  *
  * @param {number} currentGeneration - The input generation number.
- * @returns {string} - The generated prompt filename string.
+ * @returns {string} - The generated filename string.
  */
-export function buildPromptFilename(currentGeneration) {
-	return path.join(".", `generation-${pad(currentGeneration)}.md`);
+export function buildErrorFilename(currentGeneration) {
+	return path.join(".", `generation-${pad(currentGeneration)}.log`);
 }
 
 /**
- * Builds a formatted string combining the given prompt and optional negativePrompt.
+ * Builds a prompt filename string for the base of the generation request.
  *
- * @param {string} prompt - The main prompt to be included in the output.
- * @param {string} [negativePrompt] - The optional negative prompt to be included in the output.
- * @returns {string} - The formatted string combining the prompts.
+ * @param {string} name - name of the file.
+ * @returns {string} - The generated prompt filename string.
  */
-export function buildPrompt(prompt, negativePrompt = "") {
+export function buildPromptFilename(name) {
+	return path.join(".", `${name}.md`);
+}
+
+/**
+ * Builds a formatted string combining the given prompt and optional negative prompt,
+ * as well as other configuration options such as persona, model, and temperature.
+ *
+ * @returns {string} - The formatted string combining the prompts and configuration options.
+ */
+export function buildPrompt(base) {
 	return `# Configuration
+> Generated by [fail2@${pkg.version}](https://github.com/failfa-st/fail2)
 
-## Prompt
+## Command
 
-\`\`\`shell
-${prompt}
+\`\`\`
+node ${base} ${Object.entries(flags)
+		.map(([key, value]) => {
+			if (typeof value === "boolean") {
+				return value ? `--${key}` : "";
+			}
+			if (typeof value === "number") {
+				return `--${key} ${value}`;
+			}
+			if (value) {
+				return `--${key} "${value}"`;
+			}
+		})
+		.join(" ")}
 \`\`\`
 
-## Negative Prompt
+### Prompt
 
-\`\`\`shell
-${negativePrompt}
+\`\`\`
+${flags.prompt}
+\`\`\`
+
+### Negative Prompt
+
+\`\`\`
+${flags.negativePrompt}
+\`\`\`
+
+### Persona
+
+\`\`\`
+${flags.persona}
+\`\`\`
+
+### Model
+
+\`\`\`
+${flags.model}
+\`\`\`
+
+### Temperature
+
+\`\`\`
+${flags.temperature}
+\`\`\`
+
+### Seed
+
+\`\`\`
+${seed}
 \`\`\`
 `;
 }
@@ -279,15 +351,26 @@ export function prettify(code) {
 }
 
 /**
+ * Writes error content to a file.
+ *
+ * @param {number} generation - The generation number for the error file.
+ * @param {string} content - The content to write to the error file.
+ * @returns {Promise<void>} - A promise that resolves when the write operation is complete.
+ */
+export async function writeError(generation, content) {
+	const filename = buildErrorFilename(generation);
+	await fs.writeFile(filename, content);
+}
+
+/**
  * Handles errors that occur during the code generation process.
  *
  * @param {Error} error - The error object containing information about the error.
- * @param {number} generation - The current generation number.
  * @returns {Promise<void>} - A promise that resolves when the error is handled.
  */
-export async function handleError(error, generation) {
+export async function handleError(error) {
 	const message = (
-		error.response?.data?.error.message ??
+		error.response?.data?.error?.message ??
 		error.message ??
 		"unknown error"
 	).trim();
@@ -297,11 +380,6 @@ export async function handleError(error, generation) {
 	if (code === "ERR_MODULE_NOT_FOUND") {
 		console.error(message);
 		return;
-	}
-
-	// The AI might increment too often
-	if (message.startsWith("ENOENT") && generation > 1) {
-		await evolve(generation - 1);
 	}
 
 	// Errors in the API
@@ -334,4 +412,19 @@ export async function handleError(error, generation) {
  */
 export async function write(code) {
 	await fs.writeFile("./project/src/index.js", prettify(code));
+}
+
+/**
+ * Determines whether the input code is valid JavaScript by attempting to format it using Prettier.
+ *
+ * @param {string} code - The code to check for validity.
+ * @returns {boolean} - True if the code is valid JavaScript, false otherwise.
+ */
+export function isValidJS(code) {
+	try {
+		prettier.format(code, { parser: "babel" });
+		return true;
+	} catch {
+		return false;
+	}
 }
