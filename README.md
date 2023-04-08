@@ -3,7 +3,8 @@
 <p align="center"><img src="assets/logo.png" alt="logo" width="200"/></p>
 
 > This project is built to fail  
-> (until it doesn't)
+> (until it doesn't)  
+> Restart until it works
 
 <!-- toc -->
 
@@ -23,6 +24,8 @@
   * [Seed](#seed)
 - [Starter Files](#starter-files)
 - [Functionality](#functionality)
+- [Guiding Procedural Generation](#guiding-procedural-generation)
+  * [Examples](#examples)
 
 <!-- tocstop -->
 
@@ -106,8 +109,16 @@ and keep it open.
 
 To start the code generation process, run the following command:
 
-```shell
+```
 node base-default.js -p "<prompt>" -g <generations> -P "<persona>" -t <temperature> -c -m "<model>" -n "<negative_prompt>" -s <seed>
+```
+
+Or use one of the basic examples:
+
+```
+node base-default.js -p "matrix code" -g 3
+node base-art.js -p "flow field" -g 10 -c -s 123456789
+node base-game.js -p "arcade game asteroids" -g 5 -n "audio files, images, alert" -P "JavaScript expert, game developer, retro lover"
 ```
 
 ## Options
@@ -160,11 +171,11 @@ the seed is set to a random number between 0 and 100000000. If a custom seed is 
 
 ## Starter Files
 
-This project comes with two starter files, [`base-default.js`](`base-default.js`) and
-[`base-art.js`](`base-art.js`), which provide a basic starting point and an example of how to add
-dependencies.
+This project comes with three starter files, [`base-default.js`](`base-default.js`),
+[`base-art.js`](`base-art.js`) and [`base-game.js`](`base-game.js`), which provide a basic starting
+point and an example of how to add dependencies.
 
-> ⚠️ Custom files must always start with `base-`
+> ⚠️ Starter files must always start with `base-`
 
 > 💡 To avoid extra token costs, create a custom base file such as `base-no-changelog.js` without
 > the changelog comment.
@@ -178,15 +189,62 @@ can create a specified number of generations of code. The generated code is form
 and saved in separate files. The project also keeps track of changes and provides a changelog.
 Additionally, it can remove previously generated code. The project can handle errors.
 
-The generated code is written to a file, `./project/src/index.js`, which is compiled by Webpack. A
-Webpack Dev Server runs, allowing you to view the live changes as the code generation process
-evolves.
+The generated code is written to a file, [`project/src/index.js`](project/src/index.js), which is
+compiled by Webpack. A Webpack Dev Server runs, allowing you to view the live changes as the code
+generation process evolves.
 
 The project uses two main files:
 
-- `base.js`: This file manages the code generation process using the OpenAI API, writes the
-  generated code to files (including `./project/src/index.js`), and handles errors that might occur
-  during code generation.
+- [`base.js`](base.js): This file manages the code generation process using the OpenAI API, writes
+  the generated code to files (including [`project/src/index.js`](project/src/index.js)) and handles
+  errors that might occur during code generation.
 - `base-*.js`: This file is the starting point for the code generation process. It contains the
   initial code snippet and sets everything in motion for generating code by calling the necessary
-  functions from `base.js`.
+  functions from [`base.js`](base.js).
+
+## Guiding Procedural Generation
+
+To continue from a certain generation, either because you're satisfied with it or you need to
+correct an issue, use the following format:
+`node generation-xxxx.js -g <generation + 1> -p "<prompt>"`
+
+### Examples
+
+**1. Fixing a glitch in generation 4**
+
+In this example, there is an issue with the fourth generation of a procedural generation, causing
+the background to be too dark and the game player to be invisible. To fix this issue, the user runs
+the following command:
+
+```
+node generation-0004.js -g 5 -p "fix: excessively dark background, player concealed" -c
+```
+
+This command starts from generation 4 (`generation-0004.js`) and moves on to the next generation
+(generation 5) while providing a prompt to fix the background darkness and player visibility issue.
+
+**2. Adding a scoring system at generation 3**
+
+In this case, the user is satisfied with the game's progress at the third generation and wants to
+add a scoring system. To do so, they run the following command:
+
+```
+node generation-0003.js -g 4 -p "feat: implement scoring" -c
+```
+
+This command initiates from generation 3 (`generation-0003.js`) and proceeds to the next generation
+(generation 4), incorporating a prompt to implement a scoring feature into the game.
+
+**3. Retaining the flow field from generation 5 but disregarding subsequent generations**
+
+In this situation, the user appreciates the flow field generated in the fifth generation but is
+unhappy with the results from later generations. To achieve the desired outcome, they execute the
+following command:
+
+```
+node generation-0005.js -g 10 -p "flow field" -c
+```
+
+This command starts from generation 5 (`generation-0005.js`) and continues until generation 10,
+maintaining the flow field from generation 5 and disregarding the undesired outcomes of the
+generations in between.
