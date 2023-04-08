@@ -9,12 +9,13 @@
 
 - [Overview](#overview)
 - [Getting Started Guide](#getting-started-guide)
-  - [1. Prerequisites](#1-prerequisites)
-  - [2. Clone the repository](#2-clone-the-repository)
-  - [3. Install dependencies](#3-install-dependencies)
-  - [4. Add your API key](#4-add-your-api-key)
+  * [1. Prerequisites](#1-prerequisites)
+  * [2. Clone the repository](#2-clone-the-repository)
+  * [3. Install dependencies](#3-install-dependencies)
+  * [4. Add your API key](#4-add-your-api-key)
 - [Usage](#usage)
 - [Options](#options)
+  * [Custom Start File](#custom-start-file)
 - [Functionality](#functionality)
 
 <!-- tocstop -->
