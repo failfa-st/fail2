@@ -5,7 +5,6 @@
 > This project is built to fail  
 > (until it doesn't)
 
-
 <!-- toc -->
 
 - [Overview](#overview)
@@ -29,15 +28,14 @@ bugs.
 This project, "fail2", is the second version and has been derived from its predecessor,
 ["fail1"](https://github.com/failfa-st/fail1), incorporating improvements and additional features.
 
-The generated code will be executed in the browser on a Canvas element and aims to create 2D applications
-using JavaScript.
+The generated code will be executed in the browser on a Canvas element and aims to create 2D
+applications using JavaScript.
 
 ## Getting Started Guide
 
 This guide will walk you through the process of using our generative process powered by OpenAI's
 GPT-3.5 language model to create innovative JavaScript Canvas2D projects. You'll learn how to
 install dependencies, add your API key, run the first generation, and explore the results.
-
 
 ### 1. Prerequisites
 
@@ -95,7 +93,6 @@ npm run dev
 This will open http://localhost:8080 in your browser. If it doesn't, then please open it yourself
 and keep it open.
 
-
 To start the code generation process, run the following command:
 
 ```shell
@@ -113,6 +110,16 @@ node generation-000.js -G "<goal>" -g <generations> -p "<persona>" -t <temperatu
 | `--clean`       | `-c`  | `boolean` | `false`                                                                    | Set to `true` if you want to remove any previously generated code |
 | `--model`       | `-m`  | `string`  | `"gpt-3.5-turbo"`                                                          | Sets the model to use for generating the code                     |
 | `--negative`    | `-n`  | `string`  |                                                                            | Sets the negative prompt for the generated code                   |
+
+### Custom Start File
+
+This project provides two sample files, generation-000.js and custom-000.js, to initiate the code
+generation process. The former includes a changelog and preset imports to facilitate the initial
+phase, while the latter enables you to customize the code snippet by specifying your preferred
+imports. Moreover, you can create multiple custom files to cater to different requirements and
+select the appropriate one to commence the code generation process.
+
+> ⚠️ Custom files must always start with `custom-`
 
 ## Functionality
 

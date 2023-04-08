@@ -22,6 +22,7 @@ Options
   -t, --temperature    Set the temperature for the generated code. Default is 0.2.
   -c, --clean          Set to true if you want to remove any previously generated code.
   -m, --model          Set the model to use for generating the code. Default is "gpt-3.5-turbo".
+  -n, --neg            Set the negative prompt. Default is "". 	
 
 Examples
   $ node generation-000.js -G "console based mandelbrot set ascii" -g 3 -p "Node.js developer, creative" -c
@@ -87,10 +88,9 @@ GOAL: ${flags.goal}${
 }
 
 RULES:
-The code should ALWAYS be EXTENDED or FIXED
 The GOAL must be completed
-increment the generation constant ONCE per generation
-EXTEND the CHANGELOG
+The code should ALWAYS be EXTENDED or FIXED
+Increment the generation constant ONCE per generation
 NEVER use external apis with secret or key
 EXCLUSIVELY use esm (imports)
 NEVER explain anything
@@ -99,6 +99,8 @@ EXCLUSIVELY output JavaScript
 EVERYTHING happens in one file
 VERY IMPORTANT: the entire answer has to be valid JavaScript
 `;
+const base = path.parse(process.argv[1]).base;
+console.log(instructions, path.parse(process.argv[1]));
 
 const history = [];
 
@@ -119,7 +121,7 @@ export async function evolve(generation) {
 	spinner.start(`Evolution ${generation} -> ${nextGeneration}`);
 
 	try {
-		const filename = buildFilename(generation);
+		const filename = generation === 0 ? base : buildFilename(generation);
 		const code = await fs.readFile(filename, "utf-8");
 
 		// Reduce history length
@@ -129,7 +131,12 @@ export async function evolve(generation) {
 		if (flags.clean) {
 			// Remove all older generations
 			const files = (
-				await globby(["generation-*.js", "generation-*.md", "!generation-000.js"])
+				await globby([
+					"generation-*.js",
+					"generation-*.md",
+					"!generation-000.js",
+					"!custom-*.js",
+				])
 			).filter(file => file > buildFilename(generation));
 			await Promise.all(files.map(async file => await fs.unlink(file)));
 		}
@@ -182,7 +189,7 @@ export async function evolve(generation) {
 
 		// Code should start with a comment (changelog). If it doesn't it is often not JavaScrip but
 		// a human language response
-		if (cleanContent.startsWith("/*")) {
+		if (cleanContent.startsWith("/*") || cleanContent.startsWith("import")) {
 			history.push({
 				role: "assistant",
 				content: cleanContent,
