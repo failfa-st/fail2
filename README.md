@@ -217,7 +217,7 @@ the background to be too dark and the game player to be invisible. To fix this i
 the following command:
 
 ```
-node generation-0004.js -g 5 -p "fix: excessively dark background, player concealed" -c
+node generation-0004.js -g 5 -p "fix: dark background, player invisible" -c
 ```
 
 This command starts from generation 4 (`generation-0004.js`) and moves on to the next generation
