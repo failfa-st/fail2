@@ -103,7 +103,7 @@ SEED: ${seed}
 
 RULES:
 COMPLETE the GOAL
-ALWAYS EXTENDED or FIX the code
+ALWAYS EXTEND or FIX the code
 INCREMENT "const generation" ONCE per generation
 NEVER use external apis with key
 NEVER explain anything
