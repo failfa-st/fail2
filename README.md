@@ -171,9 +171,12 @@ the seed is set to a random number between 0 and 100000000. If a custom seed is 
 
 ## Starter Files
 
-This project comes with three starter files, [`base-default.js`](`base-default.js`),
-[`base-art.js`](`base-art.js`) and [`base-game.js`](`base-game.js`), which provide a basic starting
-point and an example of how to add dependencies.
+This project comes with three starter files, [`base-default.js`](`base-default.js`) (no imports),
+[`base-art.js`](`base-art.js`) ([noisejs](https://www.npmjs.com/package/noisejs) and
+[color](https://www.npmjs.com/package/color)) and [`base-game.js`](`base-game.js`)
+([noisejs](https://www.npmjs.com/package/noisejs), [color](https://www.npmjs.com/package/color) and
+[tone](https://www.npmjs.com/package/tone)), which provide a basic starting point and an example of
+how to add dependencies.
 
 > ⚠️ Starter files must always start with `base-`
 
