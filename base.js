@@ -152,7 +152,7 @@ export async function evolve(generation) {
 				await Promise.all(files.map(async file => await fs.unlink(file)));
 			}
 			const promptFilename = buildPromptFilename(
-				generation === 0 ? name : `generation-${pad(nextGeneration)}`
+				generation === 0 ? name : `generation-${pad(generation)}`
 			);
 			await fs.writeFile(promptFilename, buildPrompt(base));
 
