@@ -17,11 +17,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-          # required to use our own personal access token
-          # we need to use a custom PAT as other workflows
-          # aren't triggered using secrets.GITHUB_TOKEN
-          # persist-credentials: false
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -33,6 +29,6 @@ jobs:
 
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
