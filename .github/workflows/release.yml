@@ -21,7 +21,7 @@ jobs:
           # required to use our own personal access token
           # we need to use a custom PAT as other workflows
           # aren't triggered using secrets.GITHUB_TOKEN
-          persist-credentials: false
+          # persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
